@@ -1,4 +1,3 @@
-// src/UI/Login.tsx
 import { useState } from 'react';
 
 export const LoginScreen = ({ onLogin }: any) => {

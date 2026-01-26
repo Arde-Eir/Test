@@ -23,9 +23,9 @@ body {
   margin: 0;
   background-color: var(--bg-dark);
   color: #c0caf5;
-  font-family: 'Press Start 2P', cursive; /* The 8-Bit Font */
+  font-family: 'Press Start 2P', cursive;
   font-size: 12px;
-  overflow: hidden; /* Prevent full-page scroll */
+  overflow: hidden; 
 }
 
 /* 3. LAYOUT GRID */
@@ -67,9 +67,10 @@ body {
   flex: 1;
   display: flex;
   position: relative;
-  background-color: #1e1e1e; /* VS Code-like bg for editor area only */
+  background-color: #1e1e1e; 
   font-family: 'Fira Code', monospace;
   overflow: hidden;
+  border-bottom: var(--border-thick);
 }
 
 .line-numbers {
@@ -83,7 +84,6 @@ body {
   font-size: 14px;
   line-height: 21px;
   user-select: none;
-  overflow: hidden;
 }
 
 textarea {
@@ -101,6 +101,11 @@ textarea {
   overflow: auto;
 }
 
+textarea::selection {
+  background-color: var(--neon-blue);
+  color: #000;
+}
+
 .analyze-btn {
   background-color: var(--neon-green);
   color: #1a1b26;
@@ -109,18 +114,86 @@ textarea {
   border: none;
   padding: 15px;
   cursor: pointer;
-  border-top: var(--border-thick);
   border-bottom: var(--border-thick);
   transition: all 0.1s;
 }
 .analyze-btn:hover {
   filter: brightness(1.1);
 }
-.analyze-btn:active {
-  background-color: #fff;
+
+/* 5. LOGS & TABS (Updated Pixel Style) */
+.logs-panel {
+  height: 250px;
+  background-color: #000;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 5. RIGHT PANEL: VISUALIZER & FEEDBACK */
+.tabs-header {
+  display: flex;
+  background-color: var(--bg-panel);
+  border-bottom: var(--border-thin);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: #565f89;
+  padding: 10px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  cursor: pointer;
+  border-right: 1px solid #444;
+}
+
+.tab-btn:hover {
+  background-color: #2d2d2d;
+  color: white;
+}
+
+.tab-btn.active {
+  background-color: #000;
+  color: var(--neon-blue);
+  border-top: 2px solid var(--neon-blue);
+}
+
+.tab-content {
+  padding: 15px;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  color: #a9b1d6;
+  flex: 1;
+}
+
+/* 6. DATA TABLES (New) */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #414868;
+}
+
+.data-table th {
+  color: var(--neon-blue);
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+}
+
+.data-table td {
+  color: #c0caf5;
+}
+
+.json-view {
+  white-space: pre-wrap;
+  color: #ce9178;
+}
+
+/* 7. VISUALIZER & MENU */
 .visualizer-panel {
   width: 50%;
   display: flex;
@@ -141,157 +214,44 @@ textarea {
   background-color: var(--neon-yellow);
   color: #1a1b26;
   padding: 5px 10px;
-  border: 2px solid #fff;
-  box-shadow: 2px 2px #000;
   font-size: 10px;
+  box-shadow: 2px 2px #000;
 }
 
 .canvas-container {
-  background-color: #16161e; /* Dark grid background */
-  flex: 1; /* Ensure it fills space */
+  background-color: #16161e; 
+  flex: 1; 
 }
 
-/* 6. LOGS & TABS (Retro Style) */
-.logs-panel {
-  height: 250px;
-  background-color: #000;
-  border-top: var(--border-thick);
-  display: flex;
-  flex-direction: column;
-}
-
-.tabs-header {
-  display: flex;
+/* 8. GLOBAL CARDS (Menu & Modal) */
+.card {
   background-color: var(--bg-panel);
-  border-bottom: 2px solid #444;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  color: #565f89;
-  padding: 10px;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 10px;
-  cursor: pointer;
-  border-right: 1px solid #444;
-}
-
-.tab-btn.active {
-  background-color: #000;
-  color: var(--neon-blue);
-  border-top: 2px solid var(--neon-blue);
-}
-
-.tab-content {
-  padding: 15px;
-  overflow-y: auto;
-  font-family: 'Fira Code', monospace;
-  font-size: 12px;
-  color: #a9b1d6;
-}
-
-/* 7. MENU & NAVIGATION (Merged for Functionality) */
-.menu-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background-color: var(--bg-dark);
-  gap: 40px;
-}
-
-.menu-card {
-  width: 300px;
-  height: 200px;
-  background: var(--bg-panel);
-  border: var(--border-thick);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
+  border: 4px solid #414868;
   padding: 20px;
-  text-align: center;
+  transition: transform 0.1s, box-shadow 0.1s;
   box-shadow: var(--retro-shadow);
+  color: #fff;
 }
 
-.menu-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--neon-green);
-  background: #2d2d2d;
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #000;
+  border-color: var(--neon-blue);
 }
 
-.menu-card h2 {
-  color: var(--neon-green);
-  margin-bottom: 10px;
-  font-size: 16px;
-  line-height: 1.5;
-}
-
-.menu-card p {
-  color: #c0caf5;
-  font-family: 'Fira Code', monospace;
-  font-size: 12px;
-}
-
-.menu-icon {
-  font-size: 40px;
-  margin-bottom: 15px;
-}
-
-/* 8. MISSION UI */
-.mission-overlay {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.9);
-  padding: 15px 25px;
-  border: 2px solid var(--neon-green);
-  z-index: 100;
-  text-align: center;
-  backdrop-filter: blur(4px);
-  box-shadow: var(--retro-shadow);
-}
-
-.back-btn {
-  padding: 8px 16px;
-  background: var(--neon-green);
+.header-btn {
+  background-color: var(--neon-green);
   color: #1a1b26;
-  border: 4px solid #fff;
-  cursor: pointer;
-  margin-right: 15px;
+  border: none;
+  padding: 10px 20px;
   font-family: 'Press Start 2P', cursive;
   font-size: 10px;
-  box-shadow: var(--retro-shadow);
-}
-.back-btn:hover { filter: brightness(1.1); }
-
-/* 9. UTILS & FLOW */
-.log-success { color: var(--neon-green); margin-bottom: 5px; }
-.log-error { color: var(--neon-pink); margin-bottom: 5px; }
-
-.react-flow__node {
-  background: #1f2335;
-  border: 2px solid var(--neon-blue);
-  color: #fff;
-  border-radius: 0;
-  font-family: 'Fira Code', monospace;
-  font-size: 12px;
-  padding: 10px;
-  box-shadow: 4px 4px 0px #000;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #000;
+  margin-top: 10px;
 }
 
-.react-flow__edge-path {
-  stroke: #565f89;
-  stroke-width: 2;
-}
-
-.react-flow__controls-button {
-  background: var(--bg-panel);
-  border: 1px solid #fff;
-  border-radius: 0;
-  fill: #fff;
+.header-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }

@@ -1,11 +1,11 @@
 // src/grammar/cpp.pegjs
 // FULL C++ BASICS GRAMMAR
-// Fixes: Added location info, aligned naming (BinaryExpr, operator)
 
 start = program
 
+// FIX: Added '?' after the namespace group to make it OPTIONAL
 program
-  = _ includes:include_directive* _ "using namespace std;" _ globals:global_element* _ {
+  = _ includes:include_directive* _ ("using namespace std;" _)? globals:global_element* _ {
       const main = globals.find(g => g.type === 'MainFunction');
       const functions = globals.filter(g => g.type === 'FunctionDefinition');
       const typedefs = globals.filter(g => g.type === 'Typedef'); 

@@ -14,7 +14,7 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
 
     // 2. Control Flow
     if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
-        checkMathSafety(node.test, constraints);
+        checkMathSafety(node.test || node.condition, constraints);
         checkMathSafety(node.consequent || node.body, constraints);
         if (node.alternate) checkMathSafety(node.alternate, constraints);
         return constraints;
@@ -22,34 +22,41 @@ export function checkMathSafety(node: any, constraints: Map<string, number> = ne
 
     // 3. Variable Tracking
     if (node.type === 'VariableDeclaration' || node.type === 'Assignment') {
-        const valueNode = node.value;
-        if (valueNode) {
+        const valueNode = node.value || node.right; // Handle both
+        const targetName = node.name || (node.left ? node.left.name : null);
+
+        if (valueNode && targetName) {
             if (valueNode.type === 'Literal' && typeof valueNode.value === 'number') {
-                constraints.set(node.name, valueNode.value);
+                constraints.set(targetName, valueNode.value);
             } else if (valueNode.type === 'Identifier') {
                 const val = constraints.get(valueNode.name);
-                if (val !== undefined) constraints.set(node.name, val);
-                else constraints.delete(node.name);
+                if (val !== undefined) constraints.set(targetName, val);
+                else constraints.delete(targetName);
             } else {
-                constraints.delete(node.name);
+                constraints.delete(targetName);
             }
         }
     }
 
     // 4. Division Safety Check
-    if (node.type === 'BinaryExp' && (node.op === '/' || node.op === '%')) {
-        const denominator = node.right;
+    // FIX 2: Check for 'BinaryExpr' AND 'BinaryExp'
+    if ((node.type === 'BinaryExpr' || node.type === 'BinaryExp')) {
+        const op = node.operator || node.op;
         
-        // Literal Zero
-        if (denominator.type === 'Literal' && denominator.value === 0) {
-             throw new Error(`Math Error: Division by Literal Zero.`);
-        }
-        // Variable Zero
-        if (denominator.type === 'Identifier') {
-             const val = constraints.get(denominator.name);
-             if (val === 0) {
-                 throw new Error(`Math Error: Division by Zero. Variable '${denominator.name}' is known to be 0.`);
-             }
+        if (op === '/' || op === '%') {
+            const denominator = node.right;
+            
+            // Literal Zero
+            if (denominator.type === 'Literal' && denominator.value === 0) {
+                 throw new Error(`Math Error: Division by Literal Zero.`);
+            }
+            // Variable Zero
+            if (denominator.type === 'Identifier') {
+                 const val = constraints.get(denominator.name);
+                 if (val === 0) {
+                     throw new Error(`Math Error: Division by Zero. Variable '${denominator.name}' is known to be 0.`);
+                 }
+            }
         }
     }
 
