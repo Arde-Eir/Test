@@ -2,106 +2,143 @@ import { SymbolTable } from './SymbolTable';
 
 export function performTypeCheck(ast: any, symbols: SymbolTable) {
   if (!ast) return;
-  traverse(ast, symbols);
+  
+  // 1. Register Typedefs First
+  if (ast.typedefs) {
+      ast.typedefs.forEach((t: any) => {
+          const resolved = symbols.resolveType(t.originalType);
+          symbols.defineType(t.name, resolved);
+      });
+  }
+
+  // 2. Register Global Functions
+  if (ast.functions) {
+      ast.functions.forEach((f: any) => {
+          symbols.declare(f.name, f.returnType);
+      });
+  }
+
+  // 3. Start Traversing
+  try {
+      traverse(ast, symbols);
+  } catch (err) {
+      throw err;
+  }
 }
 
 function traverse(node: any, symbols: SymbolTable) {
     if (!node) return;
 
-    // 1. Handle Variable Declaration 
-    if (node.type === 'VariableDecl') {
-        const declaredType = node.varType; 
-        const valueType = inferType(node.value, symbols); 
+    // --- SCOPES ---
+    if (node.type === 'Program') {
+        symbols.enterScope();
+        if(node.body) traverse(node.body, symbols); // Main
+        if(node.functions) node.functions.forEach((f:any) => traverse(f, symbols));
+        symbols.exitScope();
+        return;
+    }
 
-        // Register the variable in the symbol table
-        symbols.define(node.name, declaredType);
-    
-        // Check for mismatches 
-        if (valueType !== 'unknown' && valueType !== declaredType) {
-            // Allow int -> float promotion
-            if (!(declaredType === 'float' && valueType === 'int')) {
-                throw new Error(`Type Error at Line ${node.location?.start.line}: Cannot assign value of type '${valueType}' to variable '${node.name}' (expects '${declaredType}').`);
-            }
-        }
-    }
-    
-    // 2. Handle Assignment 
-    else if (node.type === 'Assignment') {
-        const varType = symbols.lookup(node.name);
-        if (!varType) {
-             throw new Error(`Error at Line ${node.location?.start.line}: Variable '${node.name}' is not declared.`);
-        }
-        
-        const valueType = inferType(node.value, symbols);
-        if (valueType !== 'unknown' && valueType !== varType) {
-             throw new Error(`Type Error: Cannot assign '${valueType}' to '${node.name}' (expects '${varType}').`);
-        }
-    }
-    
-    // 3. Traverse into Blocks ( { ... } )
-    // 3. Traverse into Blocks (Revised for Scoping)
-    else if (node.type === 'Program' || node.type === 'Block') {
-        symbols.enterScope(); // Create new scope level
+    if (node.type === 'MainFunction' || node.type === 'Block') {
+        symbols.enterScope();
         if (node.body && Array.isArray(node.body)) {
              node.body.forEach((child: any) => traverse(child, symbols));
         }
-        symbols.exitScope(); // Clean up scope level
+        symbols.exitScope();
+        return;
     }
-    
-    // 4. Traverse into Loops and Ifs
-    else if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
-        // Checking the condition type
-        const condType = inferType(node.condition, symbols);
-        if (condType !== 'bool' && condType !== 'int') {
-             throw new Error(`Type Error: Condition must be boolean or integer.`);
-        }
 
+    if (node.type === 'FunctionDefinition') {
         symbols.enterScope();
+        node.params.forEach((p: any) => symbols.declare(p.name, p.varType));
         traverse(node.body, symbols);
         symbols.exitScope();
+        return;
+    }
 
-        if (node.elseBody) {
+    // --- VARIABLES & TYPEDEFS ---
+    if (node.type === 'VariableDeclaration') {
+        const resolvedType = symbols.resolveType(node.varType);
+        const success = symbols.declare(node.name, resolvedType);
+        
+        if (!success) {
+            throw new Error(`Type Error at line ${node.location?.start.line}: Variable '${node.name}' already declared.`);
+        }
+
+        if (node.value) {
+            const valType = inferType(node.value, symbols);
+            if (valType !== 'unknown' && valType !== resolvedType) {
+                 if (!(resolvedType === 'float' && valType === 'int')) {
+                    throw new Error(`Type Error at line ${node.location?.start.line}: Cannot assign '${valType}' to '${node.name}' (expects '${resolvedType}').`);
+                 }
+            }
+        }
+    }
+
+    else if (node.type === 'Assignment') {
+        // Handle Left Side (Identifier or ArrayAccess)
+        const targetName = node.left.name; 
+        const varType = symbols.lookup(targetName);
+        
+        if (!varType) {
+             throw new Error(`Error at line ${node.location?.start.line}: Variable '${targetName}' is not declared.`);
+        }
+        
+        const valueType = inferType(node.right, symbols); // NOTE: Assignment uses 'right' for value
+        if (valueType !== 'unknown' && valueType !== varType) {
+             throw new Error(`Type Error at line ${node.location?.start.line}: Cannot assign '${valueType}' to '${targetName}' (expects '${varType}').`);
+        }
+    }
+
+    // --- CONTROL FLOW ---
+    else if (node.type === 'IfStatement' || node.type === 'WhileStatement') {
+        const condType = inferType(node.test, symbols);
+        if (condType !== 'bool' && condType !== 'int') {
+            throw new Error(`Type Error at line ${node.location?.start.line}: Condition must be bool or int.`);
+        }
+        
+        symbols.enterScope();
+        traverse(node.consequent || node.body, symbols);
+        symbols.exitScope();
+
+        if (node.alternate) {
             symbols.enterScope();
-            traverse(node.elseBody, symbols);
+            traverse(node.alternate, symbols);
             symbols.exitScope();
         }
     }
-    
-    // 4. Traverse into Loops and Ifs
-    else if (node.type === 'WhileStatement' || node.type === 'IfStatement') {
+
+    else if (node.type === 'ForStatement') {
+        symbols.enterScope(); 
+        if (node.init) traverse(node.init, symbols);
+        if (node.test) {
+            const t = inferType(node.test, symbols);
+            if (t !== 'bool' && t !== 'int') throw new Error(`Type Error at line ${node.location?.start.line}: Loop condition must be bool or int.`);
+        }
         traverse(node.body, symbols);
-        if(node.elseBody) traverse(node.elseBody, symbols);
+        if (node.update) traverse(node.update, symbols);
+        symbols.exitScope();
     }
 }
 
 function inferType(node: any, symbols: SymbolTable): string {
     if (!node) return 'unknown';
 
-    if (node.type === 'Integer') return 'int';
-    if (node.type === 'Float') return 'float';
-    if (node.type === 'String') return 'string';
-    if (node.type === 'Boolean') return 'bool';
-    
-    if (node.type === 'Identifier') {
-        return symbols.lookup(node.name) || 'unknown';
+    if (node.type === 'Literal') {
+        if (typeof node.value === 'number') return Number.isInteger(node.value) ? 'int' : 'float';
+        if (typeof node.value === 'string') return 'string';
+        if (typeof node.value === 'boolean') return 'bool';
     }
+    
+    if (node.type === 'Identifier') return symbols.lookup(node.name) || 'unknown';
 
-        if (node.type === 'BinaryExpr') {
-            const leftType = inferType(node.left, symbols);
-            const rightType = inferType(node.right, symbols); // Get right type
-        
-        // Boolean operations always return bool
-        if (['>', '<', '>=', '<=', '==', '!='].includes(node.operator)) {
-            return 'bool';
-        }
-
-        // Math operations: Promote to float if either side is float
-        if (leftType === 'float' || rightType === 'float') {
-            return 'float';
-        }
-
-        // Otherwise, default to the left type (e.g., int + int = int)
-        return leftType; 
+    // UPDATED: Matches Grammar "BinaryExpr"
+    if (node.type === 'BinaryExpr') {
+        const left = inferType(node.left, symbols);
+        const right = inferType(node.right, symbols);
+        // UPDATED: Matches Grammar "operator"
+        if (['>', '<', '>=', '<=', '==', '!='].includes(node.operator)) return 'bool';
+        if (left === 'float' || right === 'float') return 'float';
+        return left;
     }
 
     return 'unknown';

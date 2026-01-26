@@ -1,60 +1,60 @@
-const TYPE_MAP: Record<string, string> = {
-    int: "a whole number",
-    float: "a decimal number",
-    string: "a piece of text",
-    bool: "a True/False value"
-};
-// 1. THE KNOWLEDGE BASE 
-const TEMPLATES = {
-    
-    VariableDecl: (name: string, type: string, val: string) => 
-        `You are declaring a new variable named **${name}**. It is a storage box that holds **${type}** data. You have initialized it with the value **${val}**.`,
-    
-    WhileStatement: (cond: string) => 
-        `This is a **Loop**. The computer will keep repeating the code inside this block as long as the condition **(${cond})** remains True. Be careful of infinite loops!`,
-    
-    IfStatement: (cond: string) => 
-        `This is a **Decision Gate**. The computer checks **(${cond})**. If it is True, it enters the block. If False, it skips it.`,
-    
-    Assignment: (name: string, val: string) => 
-        `You are updating the value of **${name}**. The old value is erased, and **${val}** is stored in its place.`
-};
+// src/analysis/Explainer.ts
 
-// 2. THE TRANSLATOR FUNCTION
 export function explainNode(node: any): string {
     if (!node) return "";
 
     switch (node.type) {
-        case 'VariableDecl':
-            // Extract raw values for the template
-            return TEMPLATES.VariableDecl(node.name, node.varType, JSON.stringify(node.value));
+        // --- FUNCTIONS ---
+        case 'FunctionDefinition':
+            return `🆕 **New Skill Created:** You are defining a command named **'${node.name}'**. When called, it will produce **${node.returnType}** data.`;
+        
+        case 'ReturnStatement':
+            return `↩️ **Finish Line:** The function stops here and sends the value **${synthesizeExpression(node.value)}** back to whoever called it.`;
 
+        case 'FunctionCall':
+            return `📞 **Call for Help:** You are running the command **'${node.name}'** with the inputs: (${node.args.map((a:any) => synthesizeExpression(a)).join(', ')}).`;
+
+        // --- BASICS ---
+        case 'VariableDeclaration':
+            return `📦 **Box Created:** You made a box named **'${node.name}'** to hold **${node.varType}**s. ${node.value ? `You put **${synthesizeExpression(node.value)}** inside it.` : "It is currently empty."}`;
+
+        case 'Assignment':
+            return `✏️ **Update:** You changed the value inside **'${node.left.name}'** to **${synthesizeExpression(node.right)}**.`;
+
+        // --- LOOPS & LOGIC ---
         case 'WhileStatement':
-            // "Synthesize" the condition string from the AST
-            const condStr = synthesizeExpression(node.condition);
-            return TEMPLATES.WhileStatement(condStr);
+            return `🔄 **Loop:** "While **${synthesizeExpression(node.test)}** is true, keep doing the following..."`;
+
+        case 'ForStatement':
+            return `🔢 **Counted Loop:** Start at **${node.init ? explainNode(node.init) : 'start'}**; keep going while **${synthesizeExpression(node.test)}**; and after each round, **${synthesizeExpression(node.update)}**.`;
 
         case 'IfStatement':
-            const ifCond = synthesizeExpression(node.condition);
-            return TEMPLATES.IfStatement(ifCond);
-        
-        case 'Assignment':
-            const assignedVal = synthesizeExpression(node.value);
-            return TEMPLATES.Assignment(node.name, assignedVal);
+            return `❓ **Decision:** If **${synthesizeExpression(node.test)}** is true, then do the first block. Otherwise, skip it.`;
+
+        // --- I/O ---
+        case 'OutputStatement':
+            return `🖨️ **Print:** The computer displays **${synthesizeExpression(node.value)}** on the screen.`;
+
+        case 'InputStatement':
+            return `⌨️ **Listen:** The computer pauses and waits for the user to type something into **'${synthesizeExpression(node.value)}'**.`;
 
         default:
-            return "This is a C++ statement.";
+            return "";
     }
 }
 
-// Helper to turn AST Expression back into string for the explanation
+// Helper to make code look like "English" values
 function synthesizeExpression(expr: any): string {
-    if (!expr) return "";
+    if (!expr) return "nothing";
     if (expr.type === 'BinaryExpr') {
-        return `${synthesizeExpression(expr.left)} ${expr.operator} ${synthesizeExpression(expr.right)}`;
+        const opMap: any = { '==': 'equals', '!=': 'is not', '>': 'is greater than', '<': 'is less than', '&&': 'AND', '||': 'OR' };
+        const op = opMap[expr.operator] || expr.operator;
+        return `(${synthesizeExpression(expr.left)} ${op} ${synthesizeExpression(expr.right)})`;
     }
+    if (expr.type === 'UpdateExpr') return `${expr.arg.name} changes by 1`;
     if (expr.type === 'Identifier') return expr.name;
-    if (expr.type === 'Integer' || expr.type === 'Float') return expr.value.toString();
-    if (expr.type === 'String') return `"${expr.value}"`;
-    return "something"; 
+    if (expr.type === 'Literal') return expr.value.toString();
+    if (expr.type === 'FunctionCall') return `${expr.name}()`;
+    if (expr.type === 'ArrayAccess') return `${expr.name} at index ${synthesizeExpression(expr.index)}`;
+    return "value"; 
 }

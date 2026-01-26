@@ -1,124 +1,99 @@
-import dagre from 'dagre';
+import * as dagre from 'dagre';
 import { Node, Edge} from 'reactflow';
 
-// Helper to sanitize IDs (ReactFlow needs string IDs)
 const getId = () => `n_${Math.random().toString(36).substr(2, 9)}`;
 
 export const generateCFG = (ast: any): { nodes: Node[], edges: Edge[] } => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
     const g = new dagre.graphlib.Graph();
-    
-    // Configure Layout Direction (Top-to-Bottom)
-    g.setGraph({ rankdir: 'TB', ranksep: 50, nodesep: 50 });
+    g.setGraph({ rankdir: 'TB', ranksep: 50 });
     g.setDefaultEdgeLabel(() => ({}));
 
-    // --- 1. Graph Building Logic ---
     const createNode = (label: string, type: string = 'default') => {
         const id = getId();
-        // Width/Height needed for Dagre calculations
         g.setNode(id, { label, width: 150, height: 50 });
-        nodes.push({
-            id,
-            type, // 'input', 'default', or 'output'
-            data: { label },
-            position: { x: 0, y: 0 }, // Will be updated by dagre later
-        });
+        nodes.push({ id, type, data: { label }, position: { x: 0, y: 0 } });
         return id;
     };
 
-    const createEdge = (source: string, target: string, label: string = '') => {
-        g.setEdge(source, target);
-        edges.push({
-            id: `e_${source}_${target}`,
-            source,
-            target,
-            label,
-            type: 'smoothstep', // nice curved lines
-            animated: true,
-        });
+    const createEdge = (src: string, tgt: string, label: string = '') => {
+        g.setEdge(src, tgt);
+        edges.push({ id: `e_${src}_${tgt}`, source: src, target: tgt, label, type: 'smoothstep', animated: true });
     };
 
-    // Recursive Traversal
     const traverse = (node: any, parentId: string): string => {
         if (!node) return parentId;
 
-        // Handle Block Lists (e.g., { stmts: [...] })
+        // Arrays (Blocks)
         if (Array.isArray(node)) {
-            let currentParent = parentId;
-            node.forEach(child => {
-                currentParent = traverse(child, currentParent);
-            });
-            return currentParent;
+            let curr = parentId;
+            node.forEach(c => curr = traverse(c, curr));
+            return curr;
         }
 
-        // Determine Node Label & Type
+        // Structural Wrappers
+        if (['Program', 'MainFunction', 'Block', 'FunctionDefinition'].includes(node.type)) {
+            return traverse(node.body, parentId);
+        }
+
+        // Nodes
         let label = node.type;
         let shape = 'default';
 
         if (node.type === 'VariableDeclaration') label = `${node.varType} ${node.name}`;
+        else if (node.type === 'Typedef') label = `typedef ${node.name}`;
         else if (node.type === 'Assignment') label = `${node.left.name} = ...`;
-        else if (node.type === 'FunctionCall') label = `Call ${node.name}()`;
+        else if (node.type === 'ForStatement') { label = 'FOR Loop'; shape = 'diamond'; }
         else if (node.type === 'IfStatement') { label = 'IF Check'; shape = 'diamond'; }
         else if (node.type === 'WhileStatement') { label = 'WHILE Loop'; shape = 'diamond'; }
+        else if (node.type === 'OutputStatement') label = `cout << ...`;
+        else if (node.type === 'InputStatement') label = `cin >> ...`;
         else if (node.type === 'ReturnStatement') { label = 'Return'; shape = 'output'; }
 
-        // Create the Node
-        const nodeId = createNode(label, shape === 'output' ? 'output' : 'default');
-        
-        // Connect to previous
+        const nodeId = createNode(label, shape);
         if (parentId) createEdge(parentId, nodeId);
 
-        // Handle Branching Logic (If/Else)
+        // Branching
         if (node.type === 'IfStatement') {
-            const trueEnd = traverse(node.consequent, nodeId);
-            
-            // Visual simplification: If there's an 'else', we branch out
-            if (node.alternate) {
-                traverse(node.alternate, nodeId); // Just call it, don't save to 'falseEnd'
-            }
-            
-            return trueEnd;
+            const tEnd = traverse(node.consequent, nodeId);
+            if(node.alternate) traverse(node.alternate, nodeId);
+            return tEnd;
         }
-
-        // Handle Loops
         if (node.type === 'WhileStatement') {
             const loopEnd = traverse(node.body, nodeId);
-            // Draw line back to start (Loop)
-            createEdge(loopEnd, nodeId, 'Repeat');
+            createEdge(loopEnd, nodeId, 'Back');
+            return nodeId;
+        }
+        if (node.type === 'ForStatement') {
+            const bodyEnd = traverse(node.body, nodeId);
+            createEdge(bodyEnd, nodeId, 'Next');
             return nodeId;
         }
 
         return nodeId;
     };
 
-    // --- 2. Execution ---
-    const startId = createNode('Start', 'input');
+    // 1. Create Start
+    const start = createNode('Start', 'input');
     
-    // We mainly visualize the main() function body
-    let lastNodeId = startId;
-    if (ast && ast.body && ast.body.body) {
-        lastNodeId = traverse(ast.body.body, startId);
-    } else if (ast && ast.body) {
-        // Fallback if structure is slightly different
-        lastNodeId = traverse(ast.body, startId);
+    // 2. Traverse Graph
+    const endNode = traverse(ast, start); 
+    
+    // 3. Create Visual End
+    const visualEndId = createNode('End', 'output');
+
+    // FIX: Connect the last logic node to the Visual End
+    if (endNode) {
+        createEdge(endNode, visualEndId);
     }
 
-    const endId = createNode('End', 'output');
-    createEdge(lastNodeId, endId);
-
-    // --- 3. Apply Layout (Algorithm 9) ---
     dagre.layout(g);
-
-    const layoutedNodes = nodes.map((node) => {
-        const nodeWithPosition = g.node(node.id);
-        return {
-            ...node,
-            position: {
-                x: nodeWithPosition.x - (150 / 2), // Center anchor
-                y: nodeWithPosition.y - (50 / 2),
-            },
-        };
+    
+    // Remap positions
+    const layoutedNodes = nodes.map(n => {
+        const pos = g.node(n.id);
+        return { ...n, position: { x: pos.x - 75, y: pos.y - 25 } };
     });
 
     return { nodes: layoutedNodes, edges };

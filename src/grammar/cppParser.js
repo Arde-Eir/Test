@@ -294,58 +294,97 @@ function peg$parse(input, options) {
   var peg$f0 = function(includes, globals) {
       const main = globals.find(g => g.type === 'MainFunction');
       const functions = globals.filter(g => g.type === 'FunctionDefinition');
-      // Filter typedefs to pass to analysis
       const typedefs = globals.filter(g => g.type === 'Typedef'); 
-      return { type: "Program", body: main, functions, typedefs };
+      return { 
+        type: "Program", 
+        body: main, 
+        functions, 
+        typedefs,
+        location: location() 
+      };
     };
-  var peg$f1 = function(chars) { return { type: "Include", value: chars.join("") }; };
+  var peg$f1 = function(chars) { 
+      return { type: "Include", value: chars.join(""), location: location() }; 
+    };
   var peg$f2 = function(oldType, newName) {
-      return { type: "Typedef", originalType: oldType, name: newName };
+      return { type: "Typedef", originalType: oldType, name: newName, location: location() };
     };
-  var peg$f3 = function(body) { return { type: "MainFunction", body }; };
+  var peg$f3 = function(body) { 
+      return { type: "MainFunction", body, location: location() }; 
+    };
   var peg$f4 = function(type, name, params, body) {
-      return { type: "FunctionDefinition", returnType: type, name, params: params || [], body };
+      return { type: "FunctionDefinition", returnType: type, name, params: params || [], body, location: location() };
     };
   var peg$f5 = function(head, tail) { return [head, ...tail]; };
-  var peg$f6 = function(type, name) { return { type: "Parameter", varType: type, name }; };
-  var peg$f7 = function(stmts) { return { type: "Block", body: stmts }; };
+  var peg$f6 = function(type, name) { 
+      return { type: "Parameter", varType: type, name, location: location() }; 
+    };
+  var peg$f7 = function(stmts) { 
+      return { type: "Block", body: stmts, location: location() }; 
+    };
   var peg$f8 = function(expr) { return expr; };
   var peg$f9 = function(test, consequent, alternate) {
-      return { type: "IfStatement", test, consequent, alternate };
+      return { type: "IfStatement", test, consequent, alternate, location: location() };
     };
   var peg$f10 = function(test, body) {
-      return { type: "WhileStatement", test, body };
+      return { type: "WhileStatement", test, body, location: location() };
     };
   var peg$f11 = function(init, cond, step, body) {
-      return { type: "ForStatement", init, test: cond, update: step, body };
+      return { type: "ForStatement", init, test: cond, update: step, body, location: location() };
     };
   var peg$f12 = function(type, name, init) {
-      return { type: "VariableDeclaration", varType: type, name, value: init };
+      return { type: "VariableDeclaration", varType: type, name, value: init, location: location() };
     };
   var peg$f13 = function(type, name, size) {
-      return { type: "ArrayDeclaration", varType: type, name, size: size.value };
+      return { type: "ArrayDeclaration", varType: type, name, size: size.value, location: location() };
     };
-  var peg$f14 = function(val, chained) { return { type: "OutputStatement", value: val }; };
-  var peg$f15 = function(val) { return { type: "InputStatement", value: val }; };
-  var peg$f16 = function(val) { return { type: "ReturnStatement", value: val }; };
-  var peg$f17 = function(left, op, right) { return { type: "Assignment", operator: op, left, right }; };
-  var peg$f18 = function(left, right) { return { type: "BinaryExp", op: "||", left, right }; };
-  var peg$f19 = function(left, right) { return { type: "BinaryExp", op: "&&", left, right }; };
-  var peg$f20 = function(left, op, right) { return { type: "BinaryExp", op, left, right }; };
-  var peg$f21 = function(left, op, right) { return { type: "BinaryExp", op, left, right }; };
-  var peg$f22 = function(left, op, right) { return { type: "BinaryExp", op, left, right }; };
-  var peg$f23 = function(left, op, right) { return { type: "BinaryExp", op, left, right }; };
-  var peg$f24 = function(op, arg) { return { type: "UpdateExp", op, arg, prefix: true }; };
+  var peg$f14 = function(val, chained) { 
+      return { type: "OutputStatement", value: val, location: location() }; 
+    };
+  var peg$f15 = function(val) { 
+      return { type: "InputStatement", value: val, location: location() }; 
+    };
+  var peg$f16 = function(val) { 
+      return { type: "ReturnStatement", value: val, location: location() }; 
+    };
+  var peg$f17 = function(left, op, right) { 
+      return { type: "Assignment", operator: op, left, right, location: location() }; 
+    };
+  var peg$f18 = function(left, right) { 
+      return { type: "BinaryExpr", operator: "||", left, right, location: location() }; 
+    };
+  var peg$f19 = function(left, right) { 
+      return { type: "BinaryExpr", operator: "&&", left, right, location: location() }; 
+    };
+  var peg$f20 = function(left, op, right) { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    };
+  var peg$f21 = function(left, op, right) { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    };
+  var peg$f22 = function(left, op, right) { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    };
+  var peg$f23 = function(left, op, right) { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    };
+  var peg$f24 = function(op, arg) { 
+      return { type: "UpdateExpr", operator: op, arg, prefix: true, location: location() }; 
+    };
   var peg$f25 = function(expr) { return expr; };
-  var peg$f26 = function(name, args) { return { type: "FunctionCall", name, args: args || [] }; };
+  var peg$f26 = function(name, args) { 
+      return { type: "FunctionCall", name, args: args || [], location: location() }; 
+    };
   var peg$f27 = function(head, tail) { return [head, ...tail]; };
-  var peg$f28 = function(name, index) { return { type: "ArrayAccess", name, index }; };
+  var peg$f28 = function(name, index) { 
+      return { type: "ArrayAccess", name, index, location: location() }; 
+    };
   var peg$f29 = function(chars) { return chars.flat().join(""); };
-  var peg$f30 = function(name) { return { type: "Identifier", name }; };
-  var peg$f31 = function(digits) { return { type: "Literal", value: parseInt(digits.join(""), 10) }; };
-  var peg$f32 = function(chars) { return { type: "Literal", value: chars.join("") }; };
-  var peg$f33 = function() { return { type: "Literal", value: true }; };
-  var peg$f34 = function() { return { type: "Literal", value: false }; };
+  var peg$f30 = function(name) { return { type: "Identifier", name, location: location() }; };
+  var peg$f31 = function(digits) { return { type: "Literal", value: parseInt(digits.join(""), 10), location: location() }; };
+  var peg$f32 = function(chars) { return { type: "Literal", value: chars.join(""), location: location() }; };
+  var peg$f33 = function() { return { type: "Literal", value: true, location: location() }; };
+  var peg$f34 = function() { return { type: "Literal", value: false, location: location() }; };
   var peg$currPos = 0;
   var peg$savedPos = 0;
   var peg$posDetailsCache = [{ line: 1, column: 1 }];

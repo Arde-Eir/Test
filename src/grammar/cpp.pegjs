@@ -1,6 +1,6 @@
 // src/grammar/cpp.pegjs
 // FULL C++ BASICS GRAMMAR
-// Supports: Includes, Namespace, Typedef, Functions, Arrays, Loops, Logic
+// Fixes: Added location info, aligned naming (BinaryExpr, operator)
 
 start = program
 
@@ -8,48 +8,61 @@ program
   = _ includes:include_directive* _ "using namespace std;" _ globals:global_element* _ {
       const main = globals.find(g => g.type === 'MainFunction');
       const functions = globals.filter(g => g.type === 'FunctionDefinition');
-      // Filter typedefs to pass to analysis
       const typedefs = globals.filter(g => g.type === 'Typedef'); 
-      return { type: "Program", body: main, functions, typedefs };
+      return { 
+        type: "Program", 
+        body: main, 
+        functions, 
+        typedefs,
+        location: location() 
+      };
     }
 
 // --- Preprocessor & Global ---
 include_directive 
-  = "#include" _ "<" chars:[a-zA-Z0-9_.]+ ">" _ { return { type: "Include", value: chars.join("") }; }
+  = "#include" _ "<" chars:[a-zA-Z0-9_.]+ ">" _ { 
+      return { type: "Include", value: chars.join(""), location: location() }; 
+    }
 
 global_element 
   = main_function 
   / function_definition 
-  / typedef_declaration  // <--- ADDED TYPEDEF
+  / typedef_declaration 
   / declaration
 
-// --- Typedef (NEW) ---
+// --- Typedef ---
 typedef_declaration
   = "typedef" _ oldType:type_specifier _ newName:identifier _ ";" {
-      return { type: "Typedef", originalType: oldType, name: newName };
+      return { type: "Typedef", originalType: oldType, name: newName, location: location() };
     }
 
 // --- Functions ---
 main_function 
-  = "int main()" _ body:block { return { type: "MainFunction", body }; }
+  = "int main()" _ body:block { 
+      return { type: "MainFunction", body, location: location() }; 
+    }
 
 function_definition 
   = type:type_specifier _ name:identifier _ "(" _ params:parameter_list? _ ")" _ body:block {
-      return { type: "FunctionDefinition", returnType: type, name, params: params || [], body };
+      return { type: "FunctionDefinition", returnType: type, name, params: params || [], body, location: location() };
     }
 
 parameter_list 
   = head:parameter _ tail:("," _ @parameter)* { return [head, ...tail]; }
 
 parameter 
-  = type:type_specifier _ name:identifier { return { type: "Parameter", varType: type, name }; }
+  = type:type_specifier _ name:identifier { 
+      return { type: "Parameter", varType: type, name, location: location() }; 
+    }
 
 block 
-  = "{" _ stmts:statement* _ "}" { return { type: "Block", body: stmts }; }
+  = "{" _ stmts:statement* _ "}" { 
+      return { type: "Block", body: stmts, location: location() }; 
+    }
 
 // --- Statements ---
 statement
-  = typedef_declaration // <--- Allowed inside functions too
+  = typedef_declaration
   / declaration 
   / array_declaration 
   / for_stmt 
@@ -66,74 +79,95 @@ expr_stmt = expr:expression _ ";" { return expr; }
 // --- Control Flow ---
 if_stmt 
   = "if" _ "(" _ test:expression _ ")" _ consequent:statement _ alternate:("else" _ @statement)? {
-      return { type: "IfStatement", test, consequent, alternate };
+      return { type: "IfStatement", test, consequent, alternate, location: location() };
     }
 
 while_stmt 
   = "while" _ "(" _ test:expression _ ")" _ body:statement {
-      return { type: "WhileStatement", test, body };
+      return { type: "WhileStatement", test, body, location: location() };
     }
 
 for_stmt 
   = "for" _ "(" _ init:(declaration/expr_stmt/_) _ cond:expression? _ ";" _ step:expression? _ ")" _ body:statement {
-      return { type: "ForStatement", init, test: cond, update: step, body };
+      return { type: "ForStatement", init, test: cond, update: step, body, location: location() };
     }
 
 // --- Declarations ---
-// UPDATED: type_specifier allows both primitives (int) and custom names (myType)
 declaration 
   = type:type_specifier _ name:identifier _ init:("=" _ @expression)? _ ";" {
-      return { type: "VariableDeclaration", varType: type, name, value: init };
+      return { type: "VariableDeclaration", varType: type, name, value: init, location: location() };
     }
 
 array_declaration 
   = type:type_specifier _ name:identifier _ "[" _ size:number _ "]" _ ";" {
-      return { type: "ArrayDeclaration", varType: type, name, size: size.value };
+      return { type: "ArrayDeclaration", varType: type, name, size: size.value, location: location() };
     }
 
 // --- I/O ---
 output_stmt 
-  = "cout" _ "<<" _ val:expression _ chained:("<<" _ @expression)* _ ";" { return { type: "OutputStatement", value: val }; }
+  = "cout" _ "<<" _ val:expression _ chained:("<<" _ @expression)* _ ";" { 
+      return { type: "OutputStatement", value: val, location: location() }; 
+    }
 
 input_stmt 
-  = "cin" _ ">>" _ val:expression _ ";" { return { type: "InputStatement", value: val }; }
+  = "cin" _ ">>" _ val:expression _ ";" { 
+      return { type: "InputStatement", value: val, location: location() }; 
+    }
 
 return_stmt 
-  = "return" _ val:expression? _ ";" { return { type: "ReturnStatement", value: val }; }
+  = "return" _ val:expression? _ ";" { 
+      return { type: "ReturnStatement", value: val, location: location() }; 
+    }
 
 // --- Expressions ---
 expression = assignment
 
 assignment 
-  = left:identifier_ref _ op:("="/"="/"+="/"-=") _ right:assignment { return { type: "Assignment", operator: op, left, right }; } 
+  = left:identifier_ref _ op:("="/"="/"+="/"-=") _ right:assignment { 
+      return { type: "Assignment", operator: op, left, right, location: location() }; 
+    } 
   / logical_or
 
 logical_or 
-  = left:logical_and _ "||" _ right:logical_or { return { type: "BinaryExp", op: "||", left, right }; } 
+  = left:logical_and _ "||" _ right:logical_or { 
+      return { type: "BinaryExpr", operator: "||", left, right, location: location() }; 
+    } 
   / logical_and
 
 logical_and 
-  = left:equality _ "&&" _ right:logical_and { return { type: "BinaryExp", op: "&&", left, right }; } 
+  = left:equality _ "&&" _ right:logical_and { 
+      return { type: "BinaryExpr", operator: "&&", left, right, location: location() }; 
+    } 
   / equality
 
 equality 
-  = left:relational _ op:("=="/"!=") _ right:equality { return { type: "BinaryExp", op, left, right }; } 
+  = left:relational _ op:("=="/"!=") _ right:equality { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    } 
   / relational
 
 relational 
-  = left:additive _ op:("<="/">="/"<"/">") _ right:relational { return { type: "BinaryExp", op, left, right }; } 
+  = left:additive _ op:("<="/">="/"<"/">") _ right:relational { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    } 
   / additive
 
 additive 
-  = left:multiplicative _ op:("+"/"-") _ right:additive { return { type: "BinaryExp", op, left, right }; } 
+  = left:multiplicative _ op:("+"/"-") _ right:additive { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    } 
   / multiplicative
 
 multiplicative 
-  = left:unary _ op:("*"/"/"/"%") _ right:multiplicative { return { type: "BinaryExp", op, left, right }; } 
+  = left:unary _ op:("*"/"/"/"%") _ right:multiplicative { 
+      return { type: "BinaryExpr", operator: op, left, right, location: location() }; 
+    } 
   / unary
 
 unary 
-  = op:("++"/"--") _ arg:identifier_ref { return { type: "UpdateExp", op, arg, prefix: true }; } 
+  = op:("++"/"--") _ arg:identifier_ref { 
+      return { type: "UpdateExpr", operator: op, arg, prefix: true, location: location() }; 
+    } 
   / primary
 
 primary 
@@ -147,23 +181,25 @@ primary
 
 // --- Function Calls & Access ---
 function_call 
-  = name:identifier _ "(" _ args:argument_list? _ ")" { return { type: "FunctionCall", name, args: args || [] }; }
+  = name:identifier _ "(" _ args:argument_list? _ ")" { 
+      return { type: "FunctionCall", name, args: args || [], location: location() }; 
+    }
 
 argument_list 
   = head:expression _ tail:("," _ @expression)* { return [head, ...tail]; }
 
 array_access 
-  = name:identifier _ "[" _ index:expression _ "]" { return { type: "ArrayAccess", name, index }; }
+  = name:identifier _ "[" _ index:expression _ "]" { 
+      return { type: "ArrayAccess", name, index, location: location() }; 
+    }
 
 // --- Tokens & Types ---
-// UPDATED: Allows primitives OR custom identifiers as types
 type_specifier 
   = type_keyword 
   / identifier 
 
 type_keyword = "int" / "float" / "string" / "bool" / "void"
 
-// KEYWORDS: Explicitly exclude keywords from identifiers to prevent parsing errors
 keyword 
   = type_keyword / "if" / "else" / "while" / "for" / "return" / "cin" / "cout" / "using" / "namespace" / "typedef"
 
@@ -171,16 +207,16 @@ identifier
   = !keyword chars:([a-zA-Z_][a-zA-Z0-9_]*) { return chars.flat().join(""); }
 
 identifier_ref 
-  = name:identifier { return { type: "Identifier", name }; }
+  = name:identifier { return { type: "Identifier", name, location: location() }; }
 
 number 
-  = digits:[0-9]+ { return { type: "Literal", value: parseInt(digits.join(""), 10) }; }
+  = digits:[0-9]+ { return { type: "Literal", value: parseInt(digits.join(""), 10), location: location() }; }
 
 string_literal 
-  = '"' chars:[^"]* '"' { return { type: "Literal", value: chars.join("") }; }
+  = '"' chars:[^"]* '"' { return { type: "Literal", value: chars.join(""), location: location() }; }
 
 bool_literal 
-  = "true" { return { type: "Literal", value: true }; }
-  / "false" { return { type: "Literal", value: false }; }
+  = "true" { return { type: "Literal", value: true, location: location() }; }
+  / "false" { return { type: "Literal", value: false, location: location() }; }
 
 _ = ([ \t\n\r] / "//" [^\n]*)*
