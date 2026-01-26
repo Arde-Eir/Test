@@ -1,0 +1,297 @@
+/* src/App.css - The Gamified Pixel Theme */
+
+/* 1. IMPORTS & VARIABLES */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fira+Code:wght@400;500&display=swap');
+
+:root {
+  /* Color Palette */
+  --bg-dark: #1a1b26;      /* Deep Blue/Black */
+  --bg-panel: #24283b;     /* Lighter Panel Background */
+  --neon-green: #73daca;   /* Success / Action */
+  --neon-pink: #f7768e;    /* Error / Exit */
+  --neon-blue: #7dcfff;    /* Info / Borders */
+  --neon-yellow: #e0af68;  /* Warnings / Gold */
+  
+  /* Borders & Effects */
+  --border-thick: 4px solid #414868;
+  --border-thin: 2px solid #565f89;
+  --retro-shadow: 4px 4px 0px #000000;
+}
+
+/* 2. GLOBAL RESET */
+body {
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: #c0caf5;
+  font-family: 'Press Start 2P', cursive; /* The 8-Bit Font */
+  font-size: 12px;
+  overflow: hidden; /* Prevent full-page scroll */
+}
+
+/* 3. LAYOUT GRID */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.header {
+  height: 50px;
+  background-color: #1f2335;
+  border-bottom: var(--border-thick);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  font-size: 14px;
+  color: var(--neon-green);
+  text-shadow: 2px 2px #000;
+}
+
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 4. LEFT PANEL: EDITOR */
+.editor-panel {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  border-right: var(--border-thick);
+  background-color: var(--bg-dark);
+}
+
+.code-editor-wrapper {
+  flex: 1;
+  display: flex;
+  position: relative;
+  background-color: #1e1e1e; /* VS Code-like bg for editor area only */
+  font-family: 'Fira Code', monospace;
+  overflow: hidden;
+}
+
+.line-numbers {
+  width: 40px;
+  background-color: var(--bg-dark);
+  color: #565f89;
+  text-align: right;
+  padding-right: 10px;
+  padding-top: 10px;
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 21px;
+  user-select: none;
+  overflow: hidden;
+}
+
+textarea {
+  flex: 1;
+  background-color: transparent;
+  color: #d4d4d4;
+  border: none;
+  resize: none;
+  outline: none;
+  padding: 10px;
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 21px;
+  white-space: pre;
+  overflow: auto;
+}
+
+.analyze-btn {
+  background-color: var(--neon-green);
+  color: #1a1b26;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 14px;
+  border: none;
+  padding: 15px;
+  cursor: pointer;
+  border-top: var(--border-thick);
+  border-bottom: var(--border-thick);
+  transition: all 0.1s;
+}
+.analyze-btn:hover {
+  filter: brightness(1.1);
+}
+.analyze-btn:active {
+  background-color: #fff;
+}
+
+/* 5. RIGHT PANEL: VISUALIZER & FEEDBACK */
+.visualizer-panel {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  background-color: #16161e;
+}
+
+.viz-header {
+  padding: 10px;
+  background-color: var(--bg-panel);
+  border-bottom: var(--border-thick);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge {
+  background-color: var(--neon-yellow);
+  color: #1a1b26;
+  padding: 5px 10px;
+  border: 2px solid #fff;
+  box-shadow: 2px 2px #000;
+  font-size: 10px;
+}
+
+.canvas-container {
+  background-color: #16161e; /* Dark grid background */
+  flex: 1; /* Ensure it fills space */
+}
+
+/* 6. LOGS & TABS (Retro Style) */
+.logs-panel {
+  height: 250px;
+  background-color: #000;
+  border-top: var(--border-thick);
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs-header {
+  display: flex;
+  background-color: var(--bg-panel);
+  border-bottom: 2px solid #444;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: #565f89;
+  padding: 10px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  cursor: pointer;
+  border-right: 1px solid #444;
+}
+
+.tab-btn.active {
+  background-color: #000;
+  color: var(--neon-blue);
+  border-top: 2px solid var(--neon-blue);
+}
+
+.tab-content {
+  padding: 15px;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  color: #a9b1d6;
+}
+
+/* 7. MENU & NAVIGATION (Merged for Functionality) */
+.menu-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: var(--bg-dark);
+  gap: 40px;
+}
+
+.menu-card {
+  width: 300px;
+  height: 200px;
+  background: var(--bg-panel);
+  border: var(--border-thick);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--retro-shadow);
+}
+
+.menu-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--neon-green);
+  background: #2d2d2d;
+}
+
+.menu-card h2 {
+  color: var(--neon-green);
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.menu-card p {
+  color: #c0caf5;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+}
+
+.menu-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+/* 8. MISSION UI */
+.mission-overlay {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 15px 25px;
+  border: 2px solid var(--neon-green);
+  z-index: 100;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  box-shadow: var(--retro-shadow);
+}
+
+.back-btn {
+  padding: 8px 16px;
+  background: var(--neon-green);
+  color: #1a1b26;
+  border: 4px solid #fff;
+  cursor: pointer;
+  margin-right: 15px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  box-shadow: var(--retro-shadow);
+}
+.back-btn:hover { filter: brightness(1.1); }
+
+/* 9. UTILS & FLOW */
+.log-success { color: var(--neon-green); margin-bottom: 5px; }
+.log-error { color: var(--neon-pink); margin-bottom: 5px; }
+
+.react-flow__node {
+  background: #1f2335;
+  border: 2px solid var(--neon-blue);
+  color: #fff;
+  border-radius: 0;
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  padding: 10px;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.react-flow__edge-path {
+  stroke: #565f89;
+  stroke-width: 2;
+}
+
+.react-flow__controls-button {
+  background: var(--bg-panel);
+  border: 1px solid #fff;
+  border-radius: 0;
+  fill: #fff;
+}
