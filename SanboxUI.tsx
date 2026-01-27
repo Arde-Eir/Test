@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Editor from "@monaco-editor/react";
 import ReactFlow, { Background, Controls } from 'react-flow-renderer';
-import { CodeSenseEngine } from './CodeSenseEngine';
+import { CodeSenseEngine } from './AnalysisEngine';
 import { PedagogyManager } from './PedagogyManager';
 
 const CodeSenseSandbox = () => {
