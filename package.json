@@ -1,28 +1,23 @@
 {
-  "name": "final-codesense",
+  "name": "codesense-system",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "build:grammar": "peggy src/grammar/cpp.pegjs --output src/grammar/cppParser.js --format es",
-    "preview": "vite preview"
+    "build": "tsc && vite build"
   },
   "dependencies": {
-    "dagre": "^0.8.5",
-    "peggy": "^3.0.2",
-    "phaser": "^3.60.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "reactflow": "^11.10.1"
+    "@monaco-editor/react": "^4.7.0",
+    "lucide-react": "^0.284.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-flow-renderer": "^10.3.17"
   },
   "devDependencies": {
-    "@types/dagre": "^0.7.52",
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
-    "@vitejs/plugin-react": "^4.0.3",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.5"
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "typescript": "^5.0.0",
+    "vite": "^4.4.0"
   }
 }
