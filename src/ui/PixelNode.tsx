@@ -9,7 +9,7 @@ interface PixelNodeData {
   lineNumber?: number;
 }
 
-const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data }) => {
+const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data, selected }) => {
   // Default theme (Data/Variables)
   let borderColor = '#60a5fa'; // Blue
   let icon = '📦';
@@ -45,16 +45,19 @@ const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data }) => {
       className="hover-lift" 
       style={{
         background: bgColor,
-        border: `4px solid ${borderColor}`,
-        boxShadow: '6px 6px 0px rgba(0,0,0,0.5)',
-        padding: '12px',
-        minWidth: '180px',
-        maxWidth: '220px',
+        border: `${selected ? '5px' : '4px'} solid ${borderColor}`,
+        boxShadow: selected 
+          ? '0 0 20px rgba(250, 204, 21, 0.5), 8px 8px 0px rgba(0,0,0,0.7)' 
+          : '6px 6px 0px rgba(0,0,0,0.5)',
+        padding: 'clamp(10px, 1.5vw, 12px)',
+        minWidth: 'clamp(150px, 20vw, 180px)',
+        maxWidth: 'clamp(180px, 25vw, 220px)',
         borderRadius: '0px',
         position: 'relative',
-        transition: 'all 0.2s',
+        transition: 'all 0.2s ease',
         fontFamily: "'Press Start 2P', cursive",
-        cursor: 'pointer'
+        cursor: 'pointer',
+        transform: selected ? 'scale(1.05)' : 'scale(1)'
       }}
     >
       {/* Top Connector */}
@@ -63,10 +66,10 @@ const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data }) => {
         position={Position.Top} 
         style={{ 
           background: borderColor, 
-          width: '12px', 
-          height: '12px', 
+          width: 'clamp(10px, 1.5vw, 12px)', 
+          height: 'clamp(10px, 1.5vw, 12px)', 
           borderRadius: 0, 
-          top: '-8px',
+          top: '-6px',
           border: '2px solid #000'
         }} 
       />
@@ -80,7 +83,7 @@ const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data }) => {
         background: borderColor, 
         padding: '2px 6px',
         border: '2px solid #000',
-        fontSize: '1rem',
+        fontSize: 'clamp(0.9rem, 1.5vw, 1rem)',
         zIndex: 10,
         lineHeight: 1
       }}>
@@ -90,16 +93,34 @@ const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data }) => {
       {/* Content Text */}
       <div style={{ 
         marginTop: '10px',
-        fontSize: '0.65rem', 
+        fontSize: 'clamp(0.6rem, 1.2vw, 0.65rem)', 
         color: '#fff', 
         textAlign: 'center',
         lineHeight: '1.5',
         textShadow: '2px 2px #000',
         wordWrap: 'break-word',
-        overflowWrap: 'break-word'
+        overflowWrap: 'break-word',
+        hyphens: 'auto'
       }}>
         {label}
       </div>
+
+      {/* Line Number Badge */}
+      {data.lineNumber && (
+        <div style={{
+          position: 'absolute',
+          bottom: '-12px',
+          right: '5px',
+          background: '#1e293b',
+          color: '#94a3b8',
+          fontSize: 'clamp(0.5rem, 1vw, 0.55rem)',
+          padding: '2px 6px',
+          border: '1px solid #475569',
+          borderRadius: '3px'
+        }}>
+          L{data.lineNumber}
+        </div>
+      )}
       
       {/* Bottom Connector */}
       <Handle 
@@ -107,10 +128,10 @@ const PixelNode: React.FC<NodeProps<PixelNodeData>> = ({ data }) => {
         position={Position.Bottom} 
         style={{ 
           background: borderColor, 
-          width: '12px', 
-          height: '12px', 
+          width: 'clamp(10px, 1.5vw, 12px)', 
+          height: 'clamp(10px, 1.5vw, 12px)', 
           borderRadius: 0, 
-          bottom: '-8px',
+          bottom: '-6px',
           border: '2px solid #000'
         }} 
       />

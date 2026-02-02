@@ -1,185 +1,53 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto+Mono:wght@400;700&display=swap');
 
-/* --- GLOBAL RESETS --- */
-body {
-  background-color: #111;
-  color: #eee;
-  margin: 0;
-  overflow: hidden; /* Prevent full page scroll on Desktop */
-}
+/* Global resets */
+* { box-sizing: border-box; }
+body { background-color: #111; color: #eee; margin: 0; padding: 0; overflow-x: hidden; }
 
-/* --- PIXEL UI COMPONENTS --- */
-.pixel-card {
-  background: #1a1a1a;
-  border: 4px solid #333;
-  box-shadow: 6px 6px 0px #000;
-  position: relative;
-  overflow: hidden;
-}
+/* Pixel UI */
+.pixel-card { background: #1a1a1a; border: 4px solid #333; box-shadow: 6px 6px 0px #000; position: relative; overflow: hidden; }
+.pixel-btn { background: #333; border: 2px solid #fff; color: #fff; font-family: 'Press Start 2P', cursive; font-size: clamp(0.6rem, 1.5vw, 0.7rem); padding: clamp(8px, 1.5vw, 10px) clamp(12px, 2vw, 15px); cursor: pointer; box-shadow: 4px 4px 0px #000; transition: transform 0.1s; }
+.pixel-btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
+.pixel-btn:hover { background: #facc15; color: #000; border-color: #000; }
 
-.pixel-btn {
-  background: #333;
-  border: 2px solid #fff;
-  color: #fff;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.7rem;
-  padding: 10px 15px;
-  cursor: pointer;
-  box-shadow: 4px 4px 0px #000;
-  transition: transform 0.1s;
-}
+/* Scrollbars */
+.scroll-content { overflow-y: auto; height: 100%; padding-right: 5px; }
+.scroll-content::-webkit-scrollbar { width: 8px; }
+.scroll-content::-webkit-scrollbar-track { background: #111; }
+.scroll-content::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+.scroll-content::-webkit-scrollbar-thumb:hover { background: #facc15; }
 
-.pixel-btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px #000;
-}
+/* React Flow */
+.react-flow__node { font-family: 'Roboto Mono', monospace; font-size: clamp(9px, 1.2vw, 10px); box-shadow: 4px 4px 0px rgba(0,0,0,0.5); }
+.react-flow__edge-path { stroke-width: 2 !important; }
+.react-flow__controls-button { background: #1e293b !important; border: 1px solid #475569 !important; color: #facc15 !important; }
+.react-flow__controls-button:hover { background: #334155 !important; }
+.react-flow__minimap { background: #1e293b !important; border: 2px solid #475569 !important; }
 
-.pixel-btn:hover {
-  background: #facc15;
-  color: #000;
-  border-color: #000;
-}
+/* Animations */
+.fade-in { animation: fadeIn 0.5s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.hover-lift { transition: transform 0.2s, box-shadow 0.2s; }
+.hover-lift:hover { transform: translateY(-3px) !important; box-shadow: 0px 8px 0px rgba(0,0,0,0.5) !important; }
 
-/* --- SCROLLBARS --- */
-.scroll-content {
-  overflow-y: auto;
-  height: 100%;
-  padding-right: 5px;
-}
-
-.scroll-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scroll-content::-webkit-scrollbar-track {
-  background: #111; 
-}
-
-.scroll-content::-webkit-scrollbar-thumb {
-  background: #444; 
-  border-radius: 4px;
-}
-
-.scroll-content::-webkit-scrollbar-thumb:hover {
-  background: #facc15; 
-}
-
-/* --- REACT FLOW & EDITOR OVERRIDES --- */
-.react-flow__node {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 10px;
-  box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
-}
-
-.react-flow__edge-path {
-  stroke-width: 2 !important;
-}
-
-.myLineDecoration {
-  background: rgba(250, 204, 21, 0.3);
-  width: 100% !important; /* Force it to fill the width */
-  margin-left: 0;
-}
-
-/* --- ANIMATIONS --- */
-.fade-in {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.hover-lift {
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.hover-lift:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 10px 0px rgba(0,0,0,0.5);
-  cursor: pointer;
-}
-
-.scan-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.1), transparent);
-  animation: scan 3s infinite linear;
-  pointer-events: none;
-}
-
-@keyframes scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-.animated-banner {
-  animation: pulseBorder 4s infinite alternate;
-}
-
-@keyframes pulseBorder {
-  0% { border-color: #fff; }
-  100% { border-color: #facc15; }
-}
-
-/* --- MOBILE NAVIGATION BAR (Hidden on Desktop) --- */
-.sandbox-mobile-nav {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #1a1a1a;
-  border-top: 4px solid #facc15;
-  z-index: 100;
-  justify-content: space-around;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.sandbox-mobile-nav-item {
-  flex: 1;
-  text-align: center;
-  padding: 15px 0;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 0.6rem;
-  color: #888;
-}
-
-.sandbox-mobile-nav-item.active {
-  color: #facc15;
-  background: #222;
-}
-
-/* --- MOBILE RESPONSIVENESS (The Magic) --- */
-@media (max-width: 768px) {
-  
-  /* 1. Base Typography */
+/* Responsive */
+@media (max-width: 1024px) {
   html { font-size: 14px; }
-  
-  /* 2. Enable Scrolling on Mobile */
-  .app-container, .home-screen, .sandbox-container {
-    height: auto !important; 
-    min-height: 100vh;
-    overflow-y: auto !important;
-  }
+  .app-container, .home-screen, .sandbox-container { height: auto !important; min-height: 100vh; overflow-y: auto !important; }
+}
 
-  /* 3. Stack Dashboard Grids */
-  .home-screen > div, .dashboard-grid {
-    flex-direction: column !important;
-    overflow: visible !important;
-    height: auto !important;
-  }
-  
-  /* 4. Disable Heavy Animations */
-  .scan-line { display: none; } 
-  .animated-banner { height: 180px !important; }
+@media (max-width: 768px) {
+  html { font-size: 12px; }
+  .react-flow__controls { scale: 0.8; }
+  .react-flow__minimap { width: 120px !important; height: 80px !important; }
+  table { display: block; overflow-x: auto; white-space: nowrap; }
+}
 
-  /* 5. Touch Targets */
-  .pixel-btn { padding: 15px; }
+@media (max-width: 480px) {
+  html { font-size: 10px; }
+  .react-flow__minimap { display: none; }
+}
 
-  /* 6. Show Sandbox Navigation */
-  .sandbox-mobile-nav { display: flex !important; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
