@@ -49,7 +49,7 @@ export const LeaderboardWidget = ({ userScore }: { userScore: number }) => (
 );
 
 // --- 2. PROGRESS WIDGET ---
-export const ProgressWidget = ({ level, rank }: { level: number, rank: string }) => (
+export const ProgressWidget = ({ level, rank, xp }: { level: number, rank: string, xp: number }) => (
   <div className="pixel-card" style={{ 
       flex: 1, padding: '20px', background: '#111', 
       border: '1px solid #333', boxShadow: '4px 4px 0px #000',
